@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+}
+
+apply plugin: "java"
+apply plugin: "application"
+mainClassName = "com.analytics.Main"
+
+group 'jmm'
+version '1.0-SNAPSHOT'
+
+def buildDir = './build'
+def outputDir = './app'
+def jarName = rootProject.name
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compileOnly 'org.projectlombok:lombok:1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+}
+
+
+jar {
+    baseName(jarName)
+    from {
+        manifest {
+            attributes 'Implementation-Title': 'jmm',
+                'Implementation-Version': 'version',
+                'Main-Class': 'com.analytics.Main',
+                'Class-Path': 'libs/' + jarName + '-' + version + '.jar'
+        }
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'jmm',
+            'Implementation-Version': version,
+            'Main-Class': 'com.analytics.Main'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
+task makeApp(dependsOn: 'compileJava') {
+    doLast {
+        println('App built!')
+        copy {
+            from "$buildDir/libs/" + jarName + '-' + version + '.jar'
+            into "$outputDir"
+        }
+
+        copy {
+            from "$buildDir/resources"
+            into "$outputDir/resources"
+        }
+    }
+}
